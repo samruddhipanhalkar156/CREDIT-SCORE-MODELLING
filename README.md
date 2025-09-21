@@ -21,7 +21,7 @@ The app allows users to:
 ## 🔹 Folder Structure  
 
 
-'''
+```
 
 Credit Score Modeling
 │
@@ -50,35 +50,35 @@ Credit Score Modeling
 ├── requirements.txt
 └── README.md
 
-'''
+```
 
 
 ---
 
 ## 🔹 Data Cleaning & Preprocessing  
-- Removed unnecessary columns: ID, Customer_ID, Month, Name, SSN, Type_of_Loan.  
+- Removed unnecessary columns: `ID`, `Customer_ID`, `Month`, `Name`, `SSN`, `Type_of_Loan.`  
 - Converted categorical/object fields to numeric:  
-  - *Age, Income, Loans, Debt, etc.* cleaned from “_” and cast to numeric.  
-  - Credit_History_Age converted into *months*.  
-  - Payment_of_Min_Amount → 1/0.  
-  - Credit_Mix → mapped to {Good=3, Standard=2, Bad=1}.  
-  - Payment_Behaviour mapped to numeric values.  
-- Handled missing values using *KNNImputer*.  
-- Outlier treatment via *clipping at quantiles (1%–99%)*.  
-- Feature scaling using *StandardScaler*.  
+  - **Age, Income, Loans, Debt, etc.** cleaned from “_” and cast to numeric.  
+  - `Credit_History_Age` converted into **months**.  
+  - `Payment_of_Min_Amount` → 1/0.  
+  - `Credit_Mix` → mapped to {Good=3, Standard=2, Bad=1}.  
+  - `Payment_Behaviour` mapped to numeric values.  
+- Handled missing values using **KNNImputer**.  
+- Outlier treatment via **clipping at quantiles (1%–99%)**.  
+- Feature scaling using **StandardScaler**.  
 
 ---
 
 ## 🔹 Models Implemented  
-1. *Logistic Regression*  
+1. **Logistic Regression**  
    - Hyperparameter tuning using GridSearchCV  
-2. *Decision Tree*  
+2. **Decision Tree**  
    - Max depth & splitting criteria tuned  
    - Decision Tree plot saved  
-3. *Random Forest*  
+3. **Random Forest**  
    - Tuned with number of trees & depth  
 
-All models were saved using *Joblib/Pickle* for reuse.  
+All models were saved using **Joblib/Pickle** for reuse.  
 
 ---
 
@@ -90,11 +90,11 @@ For each model, we calculated on *train and test data*:
 - F1-score  
 - Log Loss  
 
-📊 Results stored in: Results/model_metrics.xlsx.  
+📊 Results stored in: `Results/model_metrics.xlsx.`  
 
 ---
 
-## 🔹 Streamlit Web App (app.py)  
+## 🔹 Streamlit Web App (`app.py`)  
 Features:  
 - Model selection dropdown (LR, DT, RF).  
 - Display model metrics from Excel.  
@@ -108,21 +108,25 @@ Features:
 ## 🔹 How to Run  
 
 ### 1️⃣ Install Dependencies  
-bash
+```bash
 cd "Credit Score Modelling"
 pip install -r requirements.txt
-`
+```
+
+
 
 ### 2️⃣ Run Training Script (optional, only if retraining needed)
 
-bash
+```bash
 python main.py
+```
 
 
 ### 3️⃣ Run Streamlit App
 
-bash
+```bash
 streamlit run app.py
+```
 
 
 Then open the link in your browser → [http://localhost:8501](http://localhost:8501)
@@ -131,15 +135,15 @@ Then open the link in your browser → [http://localhost:8501](http://localhost:
 
 ## 🔹 Requirements
 
-See requirements.txt for full list.
+See `requirements.txt` for full list.
 Key packages:
 
-* pandas, numpy
-* scikit-learn
-* matplotlib, seaborn
-* joblib, pickle
-* streamlit
-* openpyxl
+* `pandas`, `numpy`
+* `scikit-learn`
+* `matplotlib`, `seaborn`
+* `joblib`, `pickle`
+* `streamlit`
+* `openpyxl`
 
 ---
 
@@ -154,10 +158,14 @@ Key packages:
 
 ## 🔹 Author
 
-👩‍💻 *Sunil Pasupula*
-📧 Email: [abcdefgh@gmail.com](mailto:abcdefgh@gmail.com)
-📱 Phone: +91-1234567890
-🏫 Designation: Junior Data Scientst
+👩‍💻 *Samruddhi panhalkar*
+
+📧 Email: [samruddhipanhalkar156@gmail.com](mailto:samruddhipanhalkar156@gmail.com)
+
+📱 Phone: +91-8951831491
+
+🏫 Designation: Robotics and AI
+
 
 🌐 Social Links:
-🔗 [Instagram](https://instagram.com/yourusername) | [Facebook](https://facebook.com/yourusername) | [Twitter](https://twitter.com/yourusername) | [LinkedIn](https://www.linkedin.com/in/samruddhi-panhalkar)
+🔗  [LinkedIn](https://www.linkedin.com/in/samruddhi-panhalkar)
