@@ -162,8 +162,6 @@ Key packages:
 
 📧 Email: [samruddhipanhalkar156@gmail.com](mailto:samruddhipanhalkar156@gmail.com)
 
-📱 Phone: +91-8951831491
-
 🏫 Designation: Robotics and AI
 
 
