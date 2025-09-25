@@ -1,14 +1,13 @@
 # app.py
 import streamlit as st
 import pandas as pd
-import joblib
 import pickle
 from pathlib import Path
 
 # -------------------------
 # Paths
 # -------------------------
-MODELS_DIR = Path("Models")
+MODELS_DIR = Path("Model")
 RESULTS_DIR = Path("Results")
 
 # Load metrics
@@ -25,8 +24,11 @@ else:
         manifest = pickle.load(f)
 
 # Load preprocessor & scaler
-preprocessor = joblib.load(manifest["preprocessor"])
-scaler = joblib.load(manifest["scaler"])
+with open(manifest["preprocessor"], "rb") as f:
+    preprocessor = pickle.load(f)
+
+with open(manifest["scaler"], "rb") as f:
+    scaler = pickle.load(f)
 
 label_classes = manifest["label_classes"]
 feature_names = manifest["feature_names"]
@@ -42,12 +44,10 @@ MODEL_PATHS = {
 # -------------------------
 st.set_page_config(page_title="Credit Score Prediction", layout="wide")
 
-# Title with logo on right
-col1, col2 = st.columns([6, 1])  # adjust ratio if needed
+# Title
+col1, col2 = st.columns([6, 1])
 with col1:
     st.title("📊 Credit Score Prediction System")
-with col2:
-    st.image("Source/logo1.jpg", width=120)  # <-- update with your logo path
 
 # -------------------------
 # Model selection
@@ -60,28 +60,44 @@ if not metrics_df.empty:
     st.dataframe(metrics_df[metrics_df["Model"] == model_choice.replace(" ", "")])
 
 # Load model
-model = joblib.load(MODEL_PATHS[model_choice])
+with open(MODEL_PATHS[model_choice], "rb") as f:
+    model = pickle.load(f)
 
 # -------------------------
 # Single Input Prediction
 # -------------------------
 st.subheader("Single Input Prediction")
+
+raw_columns = preprocessor.feature_names_in_  # original dataset columns
 inputs = {}
 cols = st.columns(4)
-for i, feature in enumerate(feature_names):
+
+for i, col in enumerate(raw_columns):
     with cols[i % 4]:
-        val = st.text_input(feature, "0", key=f"feat_{i}")
-        try:
-            val = float(val)
-        except:
-            val = 0.0
-        inputs[feature] = val
+        if pd.api.types.is_numeric_dtype(pd.Series(dtype="float64")):  # default numeric
+            default_val = "0"
+        else:
+            default_val = ""
+
+        if col.lower() in ["occupation", "credit_mix", "payment_behaviour"]:
+            val = st.text_input(col, default_val, key=f"feat_{i}")
+        else:
+            val = st.text_input(col, default_val, key=f"feat_{i}")
+            try:
+                val = float(val)
+            except:
+                val = 0.0
+        inputs[col] = val
 
 if st.button("Predict Single Input"):
     single_df = pd.DataFrame([inputs])
-    single_scaled = scaler.transform(single_df)
-    pred = model.predict(single_scaled)[0]
-    st.success(f"Predicted Credit Score: **{label_classes[pred]}**")
+    try:
+        transformed = preprocessor.transform(single_df)
+        scaled = scaler.transform(transformed)
+        pred = model.predict(scaled)[0]
+        st.success(f"Predicted Credit Score: **{label_classes[pred]}**")
+    except Exception as e:
+        st.error(f"⚠️ Error during prediction: {e}")
 
 # -------------------------
 # Batch Prediction
@@ -94,23 +110,34 @@ if uploaded_file is not None:
     st.write("### Uploaded Data Preview")
     st.dataframe(user_df.head())
 
-    transformed = preprocessor.transform(user_df)
-    scaled = scaler.transform(transformed)
+    # Validate columns
+    missing_cols = set(preprocessor.feature_names_in_) - set(user_df.columns)
+    if missing_cols:
+        st.error(f"⚠️ Missing required columns: {missing_cols}")
+    else:
+        try:
+            transformed = preprocessor.transform(user_df)
+            scaled = scaler.transform(transformed)
+            preds = model.predict(scaled)
+            user_df["Predicted_Credit_Score"] = [label_classes[p] for p in preds]
 
-    preds = model.predict(scaled)
-    user_df["Predicted_Credit_Score"] = [label_classes[p] for p in preds]
+            st.write("### Predictions")
+            st.dataframe(user_df.head())
 
-    st.write("### Predictions")
-    st.dataframe(user_df.head())
-
-    csv = user_df.to_csv(index=False).encode("utf-8")
-    st.download_button("Download Predictions", data=csv, file_name="predictions.csv", mime="text/csv")
+            csv = user_df.to_csv(index=False).encode("utf-8")
+            st.download_button(
+                "Download Predictions",
+                data=csv,
+                file_name="predictions.csv",
+                mime="text/csv"
+            )
+        except Exception as e:
+            st.error(f"⚠️ Error during batch prediction: {e}")
 
 # -------------------------
-# Footer (center aligned with icons)
+# Footer
 # -------------------------
 st.markdown("---", unsafe_allow_html=True)
-
 st.markdown(
     """
     <div style="text-align: center;">
