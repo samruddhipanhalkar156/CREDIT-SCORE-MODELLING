@@ -1,7 +1,8 @@
-
+joblib
 streamlit
 pandas
 numpy
 scikit-learn
 xgboost
 openpyxl
+
