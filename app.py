@@ -16,13 +16,8 @@ metrics_df = pd.read_excel(metrics_path) if metrics_path.exists() else pd.DataFr
 
 # Load manifest
 manifest_path = RESULTS_DIR / "manifest.pkl"
-if not manifest_path.exists():
-    st.error("❌ manifest.pkl not found! Please run main.py first.")
-    st.stop()
-else:
-    with open(manifest_path, "rb") as f:
-        manifest = pickle.load(f)
-
+with open("Results/manifest.pkl", "rb") as f:
+    manifest = pickle.load(f)
 # Load preprocessor & scaler
 with open(manifest["preprocessor"], "rb") as f:
     preprocessor = pickle.load(f)
@@ -163,4 +158,5 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
 
