@@ -143,7 +143,7 @@ st.markdown(
     <div style="text-align: center;">
         <p><strong>Created by: Samruddhi R. Panhalkar</strong></p>
         <p><strong>Roll No: USN- 2MM22RI014</strong></p>
-        <p>📧 samruddhipanhalkar156@gmail.com | 📱 +91-8951831491</p>
+        <p>📧 samruddhipanhalkar156@gmail.com </p>
         <p>🏫 Maratha Mandal Engineering College</p>
         <p>
             <a href="https://instagram.com/yourusername" target="_blank">
@@ -163,3 +163,4 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
