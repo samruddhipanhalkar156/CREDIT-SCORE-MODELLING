@@ -3,50 +3,55 @@ import streamlit as st
 import pandas as pd
 import pickle
 from pathlib import Path
+from sklearn.preprocessing import StandardScaler
 
 # -------------------------
 # Paths
 # -------------------------
-BASE_DIR = Path(__file__).parent
-MODELS_DIR = BASE_DIR / "Models"
-RESULTS_DIR = BASE_DIR / "Results"
+MODELS_DIR = Path("Models")
+RESULTS_DIR = Path("Results")
+
+LR_MODEL_PATH = MODELS_DIR / "LR" / "LogisticRegression.pkl"
+DT_MODEL_PATH = MODELS_DIR / "DT" / "DecisionTree.pkl"
+RF_MODEL_PATH = MODELS_DIR / "RF" / "RandomForest.pkl"
+
+SCALER_PATH = MODELS_DIR / "scaler.pkl"
+PREPROCESSOR_PATH = MODELS_DIR / "preprocessor.pkl"
 
 # -------------------------
-# Load preprocessor & scaler
+# Load scaler and preprocessor
 # -------------------------
-with open(MODELS_DIR / "preprocessor.pkl", "rb") as f:
+with open(PREPROCESSOR_PATH, "rb") as f:
     preprocessor = pickle.load(f)
 
-with open(MODELS_DIR / "scaler.pkl", "rb") as f:
+with open(SCALER_PATH, "rb") as f:
     scaler = pickle.load(f)
 
-# -------------------------
-# Load label classes and feature names from metrics file
-# -------------------------
-metrics_file = RESULTS_DIR / "model_metrics.xlsx"
-if metrics_file.exists():
-    metrics_df = pd.read_excel(metrics_file)
-else:
-    metrics_df = pd.DataFrame()
-
-# You can also store label_classes & feature_names manually if needed
-label_classes = ["Poor", "Standard", "Good"]  # Adjust as per your training data
+# Feature names (numerical only)
 feature_names = [
-    "Age","Annual_Income","Monthly_Inhand_Salary","Num_Bank_Accounts","Num_Credit_Card",
-    "Interest_Rate","Num_of_Loan","Delay_from_due_date","Num_of_Delayed_Payment",
-    "Changed_Credit_Limit","Num_Credit_Inquiries","Credit_Mix","Outstanding_Debt",
-    "Credit_Utilization_Ratio","Credit_History_Age","Payment_of_Min_Amount",
-    "Total_EMI_per_month","Amount_invested_monthly","Payment_Behaviour","Monthly_Balance",
-    "Occupation"
+    "Age", "Annual_Income", "Monthly_Inhand_Salary", "Num_Bank_Accounts",
+    "Num_Credit_Card", "Interest_Rate", "Num_of_Loan", "Delay_from_due_date",
+    "Num_of_Delayed_Payment", "Changed_Credit_Limit", "Num_Credit_Inquiries",
+    "Outstanding_Debt", "Credit_Utilization_Ratio", "Credit_History_Age",
+    "Total_EMI_per_month", "Amount_invested_monthly", "Monthly_Balance"
 ]
 
 # -------------------------
-# Model paths
+# Load models
 # -------------------------
-MODEL_PATHS = {
-    "Logistic Regression": MODELS_DIR / "LR" / "LogisticRegression.pkl",
-    "Decision Tree": MODELS_DIR / "DT" / "DecisionTree.pkl",
-    "Random Forest": MODELS_DIR / "RF" / "RandomForest.pkl",
+with open(LR_MODEL_PATH, "rb") as f:
+    lr_model = pickle.load(f)
+
+with open(DT_MODEL_PATH, "rb") as f:
+    dt_model = pickle.load(f)
+
+with open(RF_MODEL_PATH, "rb") as f:
+    rf_model = pickle.load(f)
+
+MODELS = {
+    "Logistic Regression": lr_model,
+    "Decision Tree": dt_model,
+    "Random Forest": rf_model
 }
 
 # -------------------------
@@ -55,17 +60,9 @@ MODEL_PATHS = {
 st.set_page_config(page_title="Credit Score Prediction", layout="wide")
 st.title("📊 Credit Score Prediction System")
 
-# -------------------------
-# Model Selection
-# -------------------------
-model_choice = st.selectbox("Choose a trained model:", list(MODEL_PATHS.keys()))
-with open(MODEL_PATHS[model_choice], "rb") as f:
-    model = pickle.load(f)
-
-# Show metrics if available
-if not metrics_df.empty:
-    st.write(f"### Metrics for {model_choice}")
-    st.dataframe(metrics_df[metrics_df["Model"] == model_choice.replace(" ", "")])
+# Model selection
+model_choice = st.selectbox("Choose a trained model:", list(MODELS.keys()))
+model = MODELS[model_choice]
 
 # -------------------------
 # Single Input Prediction
@@ -75,23 +72,18 @@ inputs = {}
 cols = st.columns(4)
 for i, feature in enumerate(feature_names):
     with cols[i % 4]:
-        val = st.text_input(feature, "0", key=f"feat_{i}")
-        try:
-            val = float(val)
-        except:
-            val = 0.0
+        val = st.number_input(feature, value=0.0, step=1.0, format="%.2f")
         inputs[feature] = val
 
 if st.button("Predict Single Input"):
     single_df = pd.DataFrame([inputs])
-    # Transform categorical columns
-    single_transformed = preprocessor.transform(single_df)
-    single_scaled = scaler.transform(single_transformed)
+    single_preprocessed = preprocessor.transform(single_df)
+    single_scaled = scaler.transform(single_preprocessed)
     pred = model.predict(single_scaled)[0]
-    st.success(f"Predicted Credit Score: **{label_classes[pred]}**")
+    st.success(f"Predicted Credit Score: **{pred}**")
 
 # -------------------------
-# Batch Prediction via CSV
+# Batch Prediction
 # -------------------------
 st.subheader("Batch Prediction via CSV")
 uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
@@ -103,9 +95,8 @@ if uploaded_file is not None:
 
     transformed = preprocessor.transform(user_df)
     scaled = scaler.transform(transformed)
-
     preds = model.predict(scaled)
-    user_df["Predicted_Credit_Score"] = [label_classes[p] for p in preds]
+    user_df["Predicted_Credit_Score"] = preds
 
     st.write("### Predictions")
     st.dataframe(user_df.head())
@@ -118,12 +109,6 @@ if uploaded_file is not None:
 # -------------------------
 st.markdown("---")
 st.markdown(
-    """
-    <div style="text-align: center;">
-        <p><strong>Created by: Samruddhi R. Panhalkar</strong></p>
-        <p>📧 samruddhipanhalkar156@gmail.com </p>
-        <p>🏫 Maratha Mandal Engineering College</p>
-    </div>
-    """,
-    unsafe_allow_html=True,
+    "<p style='text-align:center;'>Created by: Samruddhi R. Panhalkar | Maratha Mandal Engineering College</p>",
+    unsafe_allow_html=True
 )
