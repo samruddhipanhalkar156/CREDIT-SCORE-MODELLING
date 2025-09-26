@@ -26,21 +26,22 @@ The app allows users to:
 Credit Score Modeling
 │
 ├── Models
-│   ├── DT
-│   ├── RF
-│   ├── LR
-│   └── knn\_imputer.pkl
+│   ├── DecisionTree.pkl
+│   ├── LogisticRegression.pkl
+│   ├── RandomForest.pkl
+│   └── feature_names.pkl
+│   └── scaler.pkl
+│   └── scaler_rf.pkl
+|
+├── Models Results
+│   ├── model_results.xlsx
 │
 ├── Raw Data
-│   ├── Customer Credit Scoring\_Train.csv
-│   └── Cleaned Data
-│       └── Cleaned\_data.csv
+│   ├── Cleaned_data.csv
+│   └── Test_data
 │
 ├── Results
-│   ├── model\_metrics.xlsx
-│   ├── manifest.pkl
 │   └── EDA Results
-│       └── Reports
 │           ├── unique\_values\_info.csv
 │           ├── missing\_data\_info.csv
 │           ├── Ydata\_profile\_report.html
