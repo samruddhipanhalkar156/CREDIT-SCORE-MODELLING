@@ -7,95 +7,91 @@ from pathlib import Path
 # -------------------------
 # Paths
 # -------------------------
-MODELS_DIR = Path("Model")
-RESULTS_DIR = Path("Results")
+BASE_DIR = Path(__file__).parent
+MODELS_DIR = BASE_DIR / "Models"
+RESULTS_DIR = BASE_DIR / "Results"
 
-# Load metrics
-metrics_path = RESULTS_DIR / "model_metrics.xlsx"
-metrics_df = pd.read_excel(metrics_path) if metrics_path.exists() else pd.DataFrame()
-
-# Load manifest
-manifest_path = RESULTS_DIR / "manifest.pkl"
-with open("Results/manifest.pkl", "rb") as f:
-    manifest = pickle.load(f)
+# -------------------------
 # Load preprocessor & scaler
-with open(manifest["preprocessor"], "rb") as f:
+# -------------------------
+with open(MODELS_DIR / "preprocessor.pkl", "rb") as f:
     preprocessor = pickle.load(f)
 
-with open(manifest["scaler"], "rb") as f:
+with open(MODELS_DIR / "scaler.pkl", "rb") as f:
     scaler = pickle.load(f)
 
-label_classes = manifest["label_classes"]
-feature_names = manifest["feature_names"]
+# -------------------------
+# Load label classes and feature names from metrics file
+# -------------------------
+metrics_file = RESULTS_DIR / "model_metrics.xlsx"
+if metrics_file.exists():
+    metrics_df = pd.read_excel(metrics_file)
+else:
+    metrics_df = pd.DataFrame()
 
+# You can also store label_classes & feature_names manually if needed
+label_classes = ["Poor", "Standard", "Good"]  # Adjust as per your training data
+feature_names = [
+    "Age","Annual_Income","Monthly_Inhand_Salary","Num_Bank_Accounts","Num_Credit_Card",
+    "Interest_Rate","Num_of_Loan","Delay_from_due_date","Num_of_Delayed_Payment",
+    "Changed_Credit_Limit","Num_Credit_Inquiries","Credit_Mix","Outstanding_Debt",
+    "Credit_Utilization_Ratio","Credit_History_Age","Payment_of_Min_Amount",
+    "Total_EMI_per_month","Amount_invested_monthly","Payment_Behaviour","Monthly_Balance",
+    "Occupation"
+]
+
+# -------------------------
+# Model paths
+# -------------------------
 MODEL_PATHS = {
-    "Logistic Regression": manifest["lr_model"],
-    "Decision Tree": manifest["dt_model"],
-    "Random Forest": manifest["rf_model"],
+    "Logistic Regression": MODELS_DIR / "LR" / "LogisticRegression.pkl",
+    "Decision Tree": MODELS_DIR / "DT" / "DecisionTree.pkl",
+    "Random Forest": MODELS_DIR / "RF" / "RandomForest.pkl",
 }
 
 # -------------------------
-# UI
+# Streamlit UI
 # -------------------------
 st.set_page_config(page_title="Credit Score Prediction", layout="wide")
-
-# Title
-col1, col2 = st.columns([6, 1])
-with col1:
-    st.title("📊 Credit Score Prediction System")
+st.title("📊 Credit Score Prediction System")
 
 # -------------------------
-# Model selection
+# Model Selection
 # -------------------------
 model_choice = st.selectbox("Choose a trained model:", list(MODEL_PATHS.keys()))
-
-# Show metrics
-if not metrics_df.empty:
-    st.write("### Model Metrics")
-    st.dataframe(metrics_df[metrics_df["Model"] == model_choice.replace(" ", "")])
-
-# Load model
 with open(MODEL_PATHS[model_choice], "rb") as f:
     model = pickle.load(f)
+
+# Show metrics if available
+if not metrics_df.empty:
+    st.write(f"### Metrics for {model_choice}")
+    st.dataframe(metrics_df[metrics_df["Model"] == model_choice.replace(" ", "")])
 
 # -------------------------
 # Single Input Prediction
 # -------------------------
 st.subheader("Single Input Prediction")
-
-raw_columns = preprocessor.feature_names_in_  # original dataset columns
 inputs = {}
 cols = st.columns(4)
-
-for i, col in enumerate(raw_columns):
+for i, feature in enumerate(feature_names):
     with cols[i % 4]:
-        if pd.api.types.is_numeric_dtype(pd.Series(dtype="float64")):  # default numeric
-            default_val = "0"
-        else:
-            default_val = ""
-
-        if col.lower() in ["occupation", "credit_mix", "payment_behaviour"]:
-            val = st.text_input(col, default_val, key=f"feat_{i}")
-        else:
-            val = st.text_input(col, default_val, key=f"feat_{i}")
-            try:
-                val = float(val)
-            except:
-                val = 0.0
-        inputs[col] = val
+        val = st.text_input(feature, "0", key=f"feat_{i}")
+        try:
+            val = float(val)
+        except:
+            val = 0.0
+        inputs[feature] = val
 
 if st.button("Predict Single Input"):
     single_df = pd.DataFrame([inputs])
-    try:
-        transformed = preprocessor.transform(single_df)
-        scaled = scaler.transform(transformed)
-        pred = model.predict(scaled)[0]
-        st.success(f"Predicted Credit Score: **{label_classes[pred]}**")
-    except Exception as e:
-        st.error(f"⚠️ Error during prediction: {e}")
+    # Transform categorical columns
+    single_transformed = preprocessor.transform(single_df)
+    single_scaled = scaler.transform(single_transformed)
+    pred = model.predict(single_scaled)[0]
+    st.success(f"Predicted Credit Score: **{label_classes[pred]}**")
 
 # -------------------------
-# Batch Prediction
+# Batch Prediction via CSV
 # -------------------------
 st.subheader("Batch Prediction via CSV")
 uploaded_file = st.file_uploader("Upload CSV", type=["csv"])
@@ -105,58 +101,29 @@ if uploaded_file is not None:
     st.write("### Uploaded Data Preview")
     st.dataframe(user_df.head())
 
-    # Validate columns
-    missing_cols = set(preprocessor.feature_names_in_) - set(user_df.columns)
-    if missing_cols:
-        st.error(f"⚠️ Missing required columns: {missing_cols}")
-    else:
-        try:
-            transformed = preprocessor.transform(user_df)
-            scaled = scaler.transform(transformed)
-            preds = model.predict(scaled)
-            user_df["Predicted_Credit_Score"] = [label_classes[p] for p in preds]
+    transformed = preprocessor.transform(user_df)
+    scaled = scaler.transform(transformed)
 
-            st.write("### Predictions")
-            st.dataframe(user_df.head())
+    preds = model.predict(scaled)
+    user_df["Predicted_Credit_Score"] = [label_classes[p] for p in preds]
 
-            csv = user_df.to_csv(index=False).encode("utf-8")
-            st.download_button(
-                "Download Predictions",
-                data=csv,
-                file_name="predictions.csv",
-                mime="text/csv"
-            )
-        except Exception as e:
-            st.error(f"⚠️ Error during batch prediction: {e}")
+    st.write("### Predictions")
+    st.dataframe(user_df.head())
+
+    csv = user_df.to_csv(index=False).encode("utf-8")
+    st.download_button("Download Predictions", data=csv, file_name="predictions.csv", mime="text/csv")
 
 # -------------------------
 # Footer
 # -------------------------
-st.markdown("---", unsafe_allow_html=True)
+st.markdown("---")
 st.markdown(
     """
     <div style="text-align: center;">
         <p><strong>Created by: Samruddhi R. Panhalkar</strong></p>
-        <p><strong>Roll No: USN- 2MM22RI014</strong></p>
         <p>📧 samruddhipanhalkar156@gmail.com </p>
         <p>🏫 Maratha Mandal Engineering College</p>
-        <p>
-            <a href="https://instagram.com/yourusername" target="_blank">
-                <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" width="30">
-            </a>
-            <a href="https://facebook.com/yourusername" target="_blank">
-                <img src="https://cdn-icons-png.flaticon.com/512/733/733547.png" width="30">
-            </a>
-            <a href="https://twitter.com/yourusername" target="_blank">
-                <img src="https://cdn-icons-png.flaticon.com/512/733/733579.png" width="30">
-            </a>
-            <a href="https://www.linkedin.com/in/samruddhi-panhalkar" target="_blank">
-                <img src="https://cdn-icons-png.flaticon.com/512/3536/3536505.png" width="30">
-            </a>
-        </p>
     </div>
     """,
     unsafe_allow_html=True,
 )
-
-
