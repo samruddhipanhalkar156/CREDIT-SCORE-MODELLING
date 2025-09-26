@@ -195,7 +195,7 @@ evaluate_and_record("DecisionTree", best_dt, X_train, y_train, X_test, y_test)
 # Random Forest: 8K samples per class
 # -------------------------
 df_rf = df.groupby(TARGET, group_keys=False).apply(
-    lambda x: x.sample(n=min(8000, len(x)), random_state=42)
+    lambda x: x.sample(n=min(3000, len(x)), random_state=42)
 ).reset_index(drop=True)
 
 X_rf = df_rf.drop(columns=[TARGET])
@@ -243,4 +243,4 @@ manifest = {
 with open(RESULTS_DIR / "manifest.pkl", "wb") as f:
     pickle.dump(manifest, f)
 
-print(" Done. Models & results saved.")
+print("✅ Done. Models & results saved.")
