@@ -17,7 +17,7 @@ metrics_df = pd.read_excel(results_file) if results_file.exists() else pd.DataFr
 # Load scaler
 scaler_path = MODELS_DIR / "scaler.pkl"
 if not scaler_path.exists():
-    st.error("❌ scaler.pkl not found! Please run main.py first.")
+    st.error(" scaler.pkl not found! Please run main.py first.")
     st.stop()
 else:
     with open(scaler_path, "rb") as f:
@@ -26,7 +26,7 @@ else:
 # Load feature names
 feature_names_path = MODELS_DIR / "feature_names.pkl"
 if not feature_names_path.exists():
-    st.error("❌ feature_names.pkl not found! Please run main.py first.")
+    st.error(" feature_names.pkl not found! Please run main.py first.")
     st.stop()
 else:
     with open(feature_names_path, "rb") as f:
@@ -60,7 +60,7 @@ if not metrics_df.empty:
 # Load model
 model_path = MODEL_PATHS[model_choice]
 if not model_path.exists():
-    st.error(f"❌ {model_choice} model not found! Please run main.py first.")
+    st.error(f" {model_choice} model not found! Please run main.py first.")
     st.stop()
 else:
     with open(model_path, "rb") as f:
@@ -99,7 +99,7 @@ if st.button("Predict Credit Score"):
     single_scaled = scaler.transform(single_df)
     # Predict
     pred = model.predict(single_scaled)[0]
-    st.success(f"✅ Predicted Credit Score: **{pred}**")
+    st.success(f" Predicted Credit Score: **{pred}**")
 
 # -------------------------
 # Batch Prediction via CSV
@@ -144,3 +144,4 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
